@@ -1,10 +1,2 @@
-Please see this thread http://springrts.com/phpbb/viewtopic.php?f=15&t=20358 for details.
-
-springgrid's goals and philosophy are:
-- make a site that makes it easy to run games on a grid of botrunner servers
-
-botrunner contains the botrunner, that runs spring games on any pc
-somewhere
-
-webserver/website contains the code for the website
-
+This project contains botrunner program which is used in conjuction with the springgrid website to run spring instances of matches scheduled there.
+To run the botrunner go into the botrunner directory and run "botrunner.py" - you might need to set up some configurations if you haven't previously.
