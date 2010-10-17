@@ -222,7 +222,7 @@ def downloadmod( host, downloadrequest):
    return True
 
 def downloadai( host, downloadrequest ):
-   global config
+   global config, writabledatadirectory
 
    ai_name = downloadrequest['ai_name']
    ai_version = downloadrequest['ai_version']
@@ -248,16 +248,19 @@ def downloadai( host, downloadrequest ):
    tar = tarfile.open(writabledatadirectory + downloadfilename)
    tar.extractall(extractdir)
    tar.close()
-   os.remove( downloadfilename )
+   os.remove( writabledatadirectory + downloadfilename )
 
    if not needscompiling:  # java ai most likely, or some other scripted/bytecode ai
       # look for a directory with the name $ai_name/$ai_version
       sourcepath = None
       for root, dirs, files in os.walk( extractdir ):
-         if root.find( ai_name + "/" + ai_version ) != -1:
-            sourcepath = root.split( ai_name + "/" + ai_version )[0] + ai_name + "/" + ai_version
-         if root.find( ai_name + "\\" + ai_version ) != -1:
-            sourcepath = root.split( ai_name + "\\" + ai_version )[0] + ai_name + "\\" + ai_version
+         possibledirs = [ai_name + "/" + ai_version, ai_name + "\\" + ai_version]
+         for possibledir in possibledirs:
+            if root.find(possibledir) != -1:
+               sourcepath = root.split(possibledir)[0] + possibledir
+               break
+         if sourcepath != None:
+            break
 
       if sourcepath == None:
          print "Failed to find ai in download"
