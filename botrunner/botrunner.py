@@ -44,6 +44,7 @@ import shutil
 from unitsync import unitsync as unitsyncpkg
 
 from utils import *
+from multicall import MultiCall
 version = None
 try:
    import version
@@ -135,11 +136,12 @@ def requestgamefromwebserver(host):
       return serverrequest[0]  # can't handle passing None in python 2.4
    except:
       print "Something went wrong: " + str( sys.exc_info() )
+      traceback.print_exc()
       return None
 
 # return xmlrpcproxy to communicate with web server
 def getxmlrpcproxy(host):
-   return xmlrpclib.ServerProxy( uri = host + "/botrunner_webservice.py" )
+   return xmlrpclib.ServerProxy( uri = host + "/botrunner_webservice" )
 
 # returns true if there is at least one host pinging ok
 def doping( status ):
@@ -150,8 +152,9 @@ def doping( status ):
          print "pinging " + host + " ..."
          getxmlrpcproxy(host).ping( config.botrunnername, config.sharedsecret, sessionid, status )
          atleastonehostsucceeded = True
-      except:
+      except Exception as e:
          print "Failed to ping " + host
+         print e
    return atleastonehostsucceeded
 
 def getreplaypath( infologcontents ):
@@ -754,7 +757,7 @@ def registermaps(host,registeredmaps):
    global unitsynclock
    print registeredmaps
 
-   multicall = xmlrpclib.MultiCall(getxmlrpcproxy(host))
+   multicall = MultiCall(getxmlrpcproxy(host))
    unitsynclock.acquire()
    for i in xrange( unitsync.GetMapCount() ):
       mapname = unitsync.GetMapName(i)
@@ -780,7 +783,7 @@ def registermods(host,registeredmods):
    global unitsynclock
    print registeredmods
 
-   multicall = xmlrpclib.MultiCall(getxmlrpcproxy(host))
+   multicall = MultiCall(getxmlrpcproxy(host))
    unitsynclock.acquire()
    for i in xrange( unitsync.GetPrimaryModCount() ):
       modname = unitsync.GetPrimaryModName(i)
@@ -814,7 +817,7 @@ def registerais(host,registeredais):
    global unitsynclock
    print registeredais
 
-   multicall = xmlrpclib.MultiCall(getxmlrpcproxy(host))
+   multicall = MultiCall(getxmlrpcproxy(host))
    registeredaiswehave = []  # we'll go through this and figure out which ones we don't have,
                              # then unregister them
    unitsynclock.acquire()
@@ -853,7 +856,7 @@ def registerais(host,registeredais):
 # we do a single multicall to retrieve all registerdd mods, maps and ais
 # first, which should speed up launch after initial launch
 def registercapabilities(host):
-   multicall = xmlrpclib.MultiCall(getxmlrpcproxy(host))
+   multicall = MultiCall(getxmlrpcproxy(host))
    multicall.getsupportedmaps( config.botrunnername, config.sharedsecret )
    multicall.getsupportedmods( config.botrunnername, config.sharedsecret )
    multicall.getsupportedais( config.botrunnername, config.sharedsecret )
@@ -949,6 +952,7 @@ def go():
             registercapabilities(host)
          except:
             print "Couldn't register capabilities to host " + host + " " + str( sys.exc_info())
+            traceback.print_exc()
 
    #try to set process niceness
    if os.name == 'posix':
