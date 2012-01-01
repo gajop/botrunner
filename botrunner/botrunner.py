@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 # Copyright Hugh Perkins 2009
 # hughperkins@gmail.com http://manageddreams.com
@@ -186,8 +186,8 @@ def doping(status):
 def getreplaypath(infologcontents):
     splitlines = infologcontents.split("\n")
     for line in splitlines:
-        if line.find("] Recording demo ") != -1:
-            demopath = line.split("] Recording demo ")[1]
+        if line.find("recording demo: ") != -1:
+            demopath = line.split("recording demo: ")[1]
             print "demo path: [" + demopath + "]"
             return demopath
     return None
@@ -440,6 +440,8 @@ def rungame(serverrequest, instanceid):
     unitsynclock.acquire()
     map_info = unitsyncpkg.MapInfo()
     unitsync.GetMapInfoEx(str(serverrequest['map_name']), map_info, 1)
+    maphash = unitsync.GetMapChecksumFromName(str(serverrequest['map_name']))
+    modhash = unitsync.GetPrimaryModChecksumFromName(str(serverrequest['mod_name']))
     team0startpos = map_info.StartPos[0]
     team1startpos = map_info.StartPos[1]
     unitsynclock.release()
@@ -456,6 +458,10 @@ def rungame(serverrequest, instanceid):
             str(team1startpos.x))
     scriptcontents = scriptcontents.replace("%TEAM1STARTPOSZ%",
             str(team1startpos.y))
+    scriptcontents = scriptcontents.replace("%MAPHASH%",
+            str(maphash))
+    scriptcontents = scriptcontents.replace("%MODHASH%",
+            str(modhash))
 
     scriptname = "script" + str(instanceid) + ".txt"
     infologname = "tmpdir" + str(instanceid) + "/infolog.txt"
@@ -614,8 +620,7 @@ def rungame(serverrequest, instanceid):
             try:
                 popen.kill()  # just to be on the safe side?
             except:
-                print "Failed killing the process"
-                traceback.print_exc()
+                pass
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "crashed"
             gameresult['replaypath'] = getreplaypath(infologcontents)
