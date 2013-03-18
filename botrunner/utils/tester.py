@@ -24,25 +24,25 @@
 
 def testBoolean( description, testvalue, targetvalue ):
    if testvalue == targetvalue:
-      print "Testing " + description + ": PASS"
+      print("Testing " + description + ": PASS")
       return True
    else:
-      print "Testing " + description + ": FAIL: " + str(testvalue) + " vs " + str(targetvalue)
+      print("Testing " + description + ": FAIL: " + str(testvalue) + " vs " + str(targetvalue))
       return False
 
 # self test function
 def test():
    if testBoolean("check for true", True, True ) == False:
-      print 'FAIL'
+      print('FAIL')
       return
    if testBoolean("check for true", False, False ) == False:
-      print 'FAIL'
+      print('FAIL')
       return
    if testBoolean("check for false, should print FAIL", True, False ) == True:
-      print 'FAIL'
+      print('FAIL')
       return
    if testBoolean("check for false, should print FAIL", False, True ) == True:
-      print 'FAIL'
+      print('FAIL')
       return
-   print 'PASS'
+   print('PASS')
 

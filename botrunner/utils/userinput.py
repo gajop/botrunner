@@ -24,7 +24,7 @@ import os
 
 # returns True for confirmed, otherwise False
 def getConfirmation( confirmationquestion ):
-   print confirmationquestion + " (y to confirm)"
+   print(confirmationquestion + " (y to confirm)")
    confirmation = sys.stdin.readline().strip().lower()
    if confirmation == 'y':
       return True
@@ -33,18 +33,18 @@ def getConfirmation( confirmationquestion ):
 # returns the entered file path or ""
 def askForPathToFile( pathName ):
    while True:
-      print "Please enter the full path to " + pathName + ":"
+      print("Please enter the full path to " + pathName + ":")
       thePath = sys.stdin.readline().strip()
       if os.path.exists(thePath):
          return thePath
       else:
-         print "The specified file \"" + thePath + "\" does not exist, please try again."
+         print("The specified file \"" + thePath + "\" does not exist, please try again.")
          continue
    return ''
 
 def getValueFromUser(questiontouser):
    while True:
-      print questiontouser
+      print(questiontouser)
       inputline = sys.stdin.readline()
       uservalue = inputline.strip()
       if uservalue != '':
@@ -52,7 +52,7 @@ def getValueFromUser(questiontouser):
 
 def getbooleanfromuser(questiontouser):
    while True:
-      print questiontouser + " (please answer 'y' or 'n')"
+      print(questiontouser + " (please answer 'y' or 'n')")
       inputline = sys.stdin.readline()
       uservalue = inputline.strip().lower()
       if uservalue == 'y' or uservalue == 'yes':
@@ -75,11 +75,11 @@ def getChoice( question, potentialchoices, validatedisplayedchoicesfunction, val
 
    #print choices
    while True:
-      print question
-      print "Please enter the number of your choice:"
-      for i in xrange( len( choices ) ):
-         print str(i + 1 ) + ". " + choices[i]
-      print str( len( choices ) + 1 ) + ". custom (eg " + potentialchoices[0] + ")"
+      print(question)
+      print("Please enter the number of your choice:")
+      for i in range( len( choices ) ):
+         print(str(i + 1 ) + ". " + choices[i])
+      print(str( len( choices ) + 1 ) + ". custom (eg " + potentialchoices[0] + ")")
 
       inputline = sys.stdin.readline().strip()
       if inputline == '':
@@ -91,25 +91,25 @@ def getChoice( question, potentialchoices, validatedisplayedchoicesfunction, val
          # could be a path?
          try:
             if validateuserschoicefunction != None and not validateuserschoicefunction( inputline ):
-               print "Not a valid choice"
+               print("Not a valid choice")
                continue
             return inputline
          except:
-            print "Not a valid choice"
+            print("Not a valid choice")
             continue
          
       if index < 1 or index > len( choices ) + 1:
-         print "Please enter a number from 1 to " + str( len( choices ) + 1 ) + "."
+         print("Please enter a number from 1 to " + str( len( choices ) + 1 ) + ".")
          continue
       if index <= len( choices ):
          return choices[index - 1]
       # user wants to enter a custom choice:
-      print "Please type in your answer (eg " + potentialchoices[0] + ") :"
+      print("Please type in your answer (eg " + potentialchoices[0] + ") :")
       inputline = sys.stdin.readline().strip()
       if inputline == '':
          continue
       if validateuserschoicefunction != None and not validateuserchoicefunction( inputline ):
-         print "Not a valid choice"
+         print("Not a valid choice")
          continue
       return inputline
 
@@ -120,12 +120,12 @@ def getPath( pathname, potentialpaths ):
       if os.path.exists( potentialpath ):
          paths.append( potentialpath )
 
-   print paths
+   print(paths)
    while True:
-      print "Please enter the number of the path to " + pathname + ":"
-      for i in xrange( len( paths ) ):
-         print str(i + 1 ) + ". " + paths[i]
-      print str( len( paths ) + 1 ) + ". custom path (eg " + potentialpaths[0] + ")"
+      print("Please enter the number of the path to " + pathname + ":")
+      for i in range( len( paths ) ):
+         print(str(i + 1 ) + ". " + paths[i])
+      print(str( len( paths ) + 1 ) + ". custom path (eg " + potentialpaths[0] + ")")
 
       inputline = sys.stdin.readline().strip()
       if inputline == '':
@@ -137,26 +137,26 @@ def getPath( pathname, potentialpaths ):
          # could be a path?
          try:
             if not os.path.exists( inputline ):
-               print "Not a valid path for " + pathname
+               print("Not a valid path for " + pathname)
                continue
             return inputline
          except:
             # probably not a spring executable
-            print "Not a valid path for " + pathname
+            print("Not a valid path for " + pathname)
             continue
          
       if index < 1 or index > len( paths ) + 1:
-         print "Please enter a number from 1 to " + str( len( paths ) + 1 ) + "."
+         print("Please enter a number from 1 to " + str( len( paths ) + 1 ) + ".")
          continue
       if index <= len( paths ):
          return paths[index - 1]
       # user wants to enter a custom path:
-      print "Please type in the path to " + pathname + " (eg " + potentialpaths[0] + ") :"
+      print("Please type in the path to " + pathname + " (eg " + potentialpaths[0] + ") :")
       inputline = sys.stdin.readline().strip()
       if inputline == '':
          continue
       if not os.path.exists( inputline ):
-         print "Not a valid path for " + pathname
+         print("Not a valid path for " + pathname)
          continue
       return inputline
 

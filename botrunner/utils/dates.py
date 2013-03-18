@@ -23,7 +23,7 @@
 
 import datetime
 
-import stringhelper
+from . import stringhelper
 
 # datestrings are in format:
 # yyyymmddhhmmss
@@ -49,18 +49,18 @@ def timedifftototalseconds( timediff ):
 # self test function
 def test():
    somedate = datetime.datetime(2009,5,3,2,6,17)
-   print somedate
+   print(somedate)
    datestring = dateTimeToDateString( somedate )
-   print datestring
+   print(datestring)
    if datestring != "20090503020617":
-      print 'FAIL'
+      print('FAIL')
       return
    seconddate = dateStringToDateTime( datestring )
-   print seconddate
+   print(seconddate)
    if seconddate != somedate:
-      print 'FAIL'
+      print('FAIL')
       return
-   print 'PASS'
+   print('PASS')
 
 if __name__ == '__main__':
    test()

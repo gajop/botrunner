@@ -1,4 +1,4 @@
-import xmlrpclib
+import xmlrpc.client
 
 class MultiCall(object):
 
@@ -8,7 +8,7 @@ class MultiCall(object):
 
     def __call__(self):
         if 'system.multiCall' in self._xmlServerProxy.system.listMethods():
-            multicall = xmlrpclib.MultiCall(self._xmlServerProxy)
+            multicall = xmlrpc.client.MultiCall(self._xmlServerProxy)
         else:
             multicall = self._xmlServerProxy
 

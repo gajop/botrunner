@@ -62,15 +62,15 @@ def writeFile( filepath, contents ):
    filehandle.close()
 
 def test():
-   teststring = u"blah\nfoo\nhello world!T^*6789"
+   teststring = "blah\nfoo\nhello world!T^*6789"
    filepath = "/tmp/foo.txt"
    writeFile( filepath, teststring )
    newstring = readFile( filepath )
    if newstring != teststring:
-      print "FAIL"
+      print("FAIL")
       return
 
-   print "PASS"
+   print("PASS")
 
 
 if __name__ == "__main__":

@@ -34,7 +34,7 @@ def eatAsInt( targetstring, n ):
 
 def getRandomAlphaNumericString(length):
    randomstring = ''
-   alphanumericchars = string.letters + string.digits
+   alphanumericchars = string.ascii_letters + string.digits
    while len(randomstring) < length:
       randomstring = randomstring + alphanumericchars[random.randrange(0,len(alphanumericchars))]
    return randomstring
@@ -48,22 +48,22 @@ def getRandomPrintableString(length):
 def getRandomString(length):
    if length == 0:
       return ''
-   return string.letters[random.randrange(0,52)] + getRandomString( length - 1 )
+   return string.ascii_letters[random.randrange(0,52)] + getRandomString( length - 1 )
 
 # self test function
 def test():
    startstring = "200904"
    (intvalue, startstring) = eatAsInt( startstring, 4 )
-   print intvalue
+   print(intvalue)
    if intvalue != 2009:
-      print "FAIL"
+      print("FAIL")
       return
    (intvalue, startstring) = eatAsInt( startstring, 2 )
-   print intvalue
+   print(intvalue)
    if intvalue != 4:
-      print "FAIL"
+      print("FAIL")
       return
-   print 'PASS'
+   print('PASS')
 
 if __name__ == '__main__':
    test()

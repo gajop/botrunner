@@ -1,7 +1,7 @@
 import os
 import sys
 
-import filehelper
+from . import filehelper
 
 # very simplistic flat parser, assumes everything is flat, and that value line always immediately follows key line
 # it tracks { and } slightly, just in case we have some nested infos in the future, which

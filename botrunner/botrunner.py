@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 # Copyright Hugh Perkins 2009
 # hughperkins@gmail.com http://manageddreams.com
@@ -23,9 +23,9 @@
 # =============================================================================
 #
 
+
 import time
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 import subprocess
 import os
 import sys
@@ -33,7 +33,7 @@ import io
 from xml.dom import minidom
 import tarfile
 import base64
-import xmlrpclib
+import xmlrpc.client
 from optparse import OptionParser
 import traceback
 import imp
@@ -87,8 +87,8 @@ class GameRunner(threading.Thread):
             uploadresulttoserver(self.host, self.serverrequest, result,
                     self.instanceid)
         except:
-            print "Something went wrong with botrunner, " +\
-                    "not uploading to server"
+            print(("Something went wrong with botrunner, " +\
+                    "not uploading to server"))
             traceback.print_exc()
         global numinstances
         global numinstanceslock
@@ -147,23 +147,23 @@ def requestgamefromwebserver(host):
         [result, serverrequest] = getxmlrpcproxy(host).getrequest(
                 config.botrunnername, config.sharedsecret, sessionid)
         if not result:
-            print "Something went wrong: " + serverrequest
+            print(("Something went wrong: " + serverrequest))
             return None
 
         if len(serverrequest) == 0:
             return None
-        print "got request, matchrequestid = " +\
-                str(serverrequest[0]['matchrequest_id'])
+        print(("got request, matchrequestid = " +\
+                str(serverrequest[0]['matchrequest_id'])))
         return serverrequest[0]  # can't handle passing None in python 2.4
     except:
-        print "Something went wrong: " + str(sys.exc_info())
+        print(("Something went wrong: " + str(sys.exc_info())))
         traceback.print_exc()
         return None
 
 
 # return xmlrpcproxy to communicate with web server
 def getxmlrpcproxy(host):
-    return xmlrpclib.ServerProxy(uri=host + "/botrunner_webservice")
+    return xmlrpc.client.ServerProxy(uri=host + "/botrunner_webservice")
 
 
 # returns true if there is at least one host pinging ok
@@ -172,14 +172,14 @@ def doping(status):
     atleastonehostsucceeded = False
     for host in config.websiteurls:
         try:
-            print "pinging " + host + " ..."
+            print(("pinging " + host + " ..."))
             getxmlrpcproxy(host).ping(
                     config.botrunnername, config.sharedsecret,
                     sessionid, status)
             atleastonehostsucceeded = True
         except Exception as e:
-            print "Failed to ping " + host
-            print e
+            print(("Failed to ping " + host))
+            print(e)
     return atleastonehostsucceeded
 
 
@@ -188,7 +188,7 @@ def getreplaypath(infologcontents):
     for line in splitlines:
         if line.find("recording demo: ") != -1:
             demopath = line.split("recording demo: ")[1]
-            print "demo path: [" + demopath + "]"
+            print(("demo path: [" + demopath + "]"))
             return demopath
     return None
 
@@ -200,37 +200,37 @@ def trydownloadingsomething(host):
                 getdownloadrequest(config.botrunnername,
                         config.sharedsecret, sessionid)
         if not success:
-            print downloadrequestlist
+            print(downloadrequestlist)
             return
 
         if len(downloadrequestlist) == 0:
-            print "Nothing to download from " + host
+            print(("Nothing to download from " + host))
             return
 
         downloadrequest = downloadrequestlist[0]
 
-        print "Got download request: " + str(downloadrequest)
+        print(("Got download request: " + str(downloadrequest)))
         if 'ai_name' in downloadrequest:
             return downloadai(host, downloadrequest)
         if 'map_name' in downloadrequest:
             return downloadmap(host, downloadrequest)
         if 'mod_name' in downloadrequest:
             return downloadmod(host, downloadrequest)
-        print "Warning: unknown download reqest type: " +\
+        print(("Warning: unknown download reqest type: " +\
                 str(downloadrequest) +\
-                ". Please check you are running the latest botrunner version."
+                ". Please check you are running the latest botrunner version."))
 
     except:
-        print "something went wrong: " + str(sys.exc_info()) + "\n" +\
-                str(traceback.extract_tb(sys.exc_traceback))
+        print(("something went wrong: " + str(sys.exc_info()) + "\n" +\
+                str(traceback.extract_tb(sys.exc_info()[2]))))
 
 
 def downloadmap(host, downloadrequest):
     mapname = downloadrequest['map_name']
     mapurl = downloadrequest['map_url']
-    print "Downloading map " + mapname + ' ' + mapurl + ' ...'
+    print(("Downloading map " + mapname + ' ' + mapurl + ' ...'))
 
-    serverrequesthandle = urllib.urlopen(mapurl, None)
+    serverrequesthandle = urllib.request.urlopen(mapurl, None)
     data = serverrequestarray = serverrequesthandle.read()
     file = open(writabledatadirectory + mapname, "wb")
     file.write(data)
@@ -246,9 +246,9 @@ def downloadmap(host, downloadrequest):
 def downloadmod(host, downloadrequest):
     modname = downloadrequest['mod_name']
     modurl = downloadrequest['mod_url']
-    print "Downloading mod " + modname + ' ' + modurl + ' ...'
+    print(("Downloading mod " + modname + ' ' + modurl + ' ...'))
 
-    serverrequesthandle = urllib.urlopen(modurl, None)
+    serverrequesthandle = urllib.request.urlopen(modurl, None)
     data = serverrequestarray = serverrequesthandle.read()
     file = open(writabledatadirectory + modname, "wb")
     file.write(data)
@@ -268,13 +268,13 @@ def downloadai(host, downloadrequest):
 
     ai_name = downloadrequest['ai_name']
     ai_version = downloadrequest['ai_version']
-    print "Downloading ai " + str(downloadrequest)
+    print(("Downloading ai " + str(downloadrequest)))
 
     needscompiling = downloadrequest['ai_needscompiling']
     # ok, so we'll download it  to .... writabledatadirectory?
     # then use tar to extract it to .... the writabledatadirectory/AI ?
     # start by retrieving it:
-    serverrequesthandle = urllib.urlopen(downloadrequest['ai_downloadurl'],
+    serverrequesthandle = urllib.request.urlopen(downloadrequest['ai_downloadurl'],
             None)
     downloadfilename = os.path.basename(downloadrequest['ai_downloadurl'])
     data = serverrequestarray = serverrequesthandle.read()
@@ -308,36 +308,36 @@ def downloadai(host, downloadrequest):
                 break
 
         if sourcepath == None:
-            print "Failed to find ai in download"
+            print("Failed to find ai in download")
             return
 
-        print "ai sourcepath: " + sourcepath
+        print(("ai sourcepath: " + sourcepath))
 
         aiinfopath = sourcepath + "/AIInfo.lua"
         if not os.path.exists(aiinfopath):
-            print "No AIAinfo.lua found, so aborting"
+            print("No AIAinfo.lua found, so aborting")
             return
 
         try:
             aiinfodict = aiinfoparser.parse(aiinfopath)
         except:
-            print "Failed to parse AIInfo.lua, aborting " +\
+            print(("Failed to parse AIInfo.lua, aborting " +\
                     str(sys.exc_info()) + "\n" +\
-                    str(traceback.extract_tb(sys.exc_traceback))
+                    str(traceback.extract_tb(sys.exc_info()[2]))))
             return
 
         if not 'shortName' in aiinfodict or not 'version' in aiinfodict:
-            print "AIInfo.lua does not appear to contain shortName " +\
-                    "or version -> aborting"
+            print(("AIInfo.lua does not appear to contain shortName " +\
+                    "or version -> aborting"))
             return
 
         if ai_name != aiinfodict['shortName'] or\
                 ai_version != aiinfodict['version']:
-            print "shortName (" + aiinfodict['shortName'] +\
+            print(("shortName (" + aiinfodict['shortName'] +\
                     ") or version (" + aiinfodict['version'] +\
                     ") contained in AIInfo.lua do not match " +\
                     "requested download AI (" + ai_name + ", " +\
-                    ai_version + ") -> aborting"
+                    ai_version + ") -> aborting"))
             return
 
         targetpath = config.aiinstallationdirectory + "/Skirmish/" +\
@@ -372,8 +372,8 @@ def downloadai(host, downloadrequest):
                 sourcepath = root.split('VERSION')[0]
 
         if sourcepath == None:
-            print "Failed to find ai in download, " +\
-                    "ie we failed to find a file called VERSION."
+            print(("Failed to find ai in download, " +\
+                    "ie we failed to find a file called VERSION."))
             return
 
         aitargetsourcedir = config.springSourcePath + "/AI/Skirmish/" + ai_name
@@ -381,20 +381,20 @@ def downloadai(host, downloadrequest):
         filehelper.rsyncav(sourcepath, aitargetsourcedir)
 
         # now, do a 'make install' on spring source, and cross-fingers :-P
-        print "launching make install for " + ai_name + " ..."
+        print(("launching make install for " + ai_name + " ..."))
         os.chdir(config.springSourcePath + '/build')
         popen = subprocess.Popen(['cmake', '..'])
         popen.wait()
         # note: calling 'make' directly is not very portable
         popen = subprocess.Popen(['make', ai_name])
         popen.wait()
-        print "ai build finished finished"
+        print("ai build finished finished")
         # run 'cmake -P AI/Skirmish/<ainame>/cmake_install.cmake'
         # to install the AI
         popen = subprocess.Popen(['cmake', '-P', 'AI/Skirmish/' +\
                 ai_name + '/cmake_install.cmake'])
         popen.wait()
-        print "ai installed"
+        print("ai installed")
 
     # so it is installed....
     # rerun unitsync I guess?
@@ -449,7 +449,7 @@ def rungame(serverrequest, instanceid):
     # for repeatability
     # it is for the website to decide which team should go on which side,
     # not the botrunner
-    print team0startpos
+    print(team0startpos)
     scriptcontents = scriptcontents.replace("%TEAM0STARTPOSX%",
             str(team0startpos.x))
     scriptcontents = scriptcontents.replace("%TEAM0STARTPOSZ%",
@@ -479,7 +479,7 @@ def rungame(serverrequest, instanceid):
 
     os.chdir(writabledatadirectory)
     existingenv = {}
-    for varname in os.environ.keys():
+    for varname in list(os.environ.keys()):
         if os.getenv(varname) != None:
             existingenv[varname] = os.getenv(varname)
     existingenv["SPRING_DATADIR"] = datadir
@@ -496,8 +496,8 @@ def rungame(serverrequest, instanceid):
                     stderr=fnull, creationflags=0x40)
             #0x40 sets idle-level process priority for windows
         except:
-            print "setting idle process priority failed for nt platform. " +\
-                    "trying to start without priority settings"
+            print(("setting idle process priority failed for nt platform. " +\
+                    "trying to start without priority settings"))
             popen = subprocess.Popen(
                     [config.springPath, writabledatadirectory + scriptname],
                     env=existingenv, stdout=fnull, stderr=fnull)
@@ -515,8 +515,8 @@ def rungame(serverrequest, instanceid):
     waitingcount = 0
     while not finished:
         if waitingcount % 30 == 0:
-            print "botrunner instance " + str(instanceid) +\
-                    ": waiting for game to terminate..."
+            print(("botrunner instance " + str(instanceid) +\
+                    ": waiting for game to terminate..."))
         waitingcount = waitingcount + 1
         if time.time() - lastpingtimeseconds > config.pingintervalminutes * 60:
             doping("playing game " + serverrequest['ai0_name'] + " vs " +\
@@ -528,7 +528,7 @@ def rungame(serverrequest, instanceid):
         if os.path.exists(writabledatadirectory + infologname):
             infologcontents = filehelper.readFile(
                     writabledatadirectory + infologname)
-        # print infologcontents
+        # print(infologcontents)
         ai0endstring = serverrequest['gameendstring'].replace(
                 "%TEAMNUMBER%", "0")
         ai1endstring = serverrequest['gameendstring'].replace(
@@ -536,39 +536,39 @@ def rungame(serverrequest, instanceid):
         if (infologcontents.find(ai0endstring) != -1) and (
                 infologcontents.find(ai1endstring) == - 1):
             # ai0 died
-            print "team 1 won!"
+            print("team 1 won!")
             gameresult['winningai'] = 1
             gameresult['resultstring'] = "ai1won"
             try:
                 popen.kill()
             except:
-                print "Failed killing the process"
+                print("Failed killing the process")
                 traceback.print_exc()
             gameresult['replaypath'] = getreplaypath(infologcontents)
             return gameresult
         if infologcontents.find(ai0endstring) == -1 and\
                 infologcontents.find(ai1endstring) != - 1:
             # ai1 died
-            print "team 0 won!"
+            print("team 0 won!")
             gameresult['winningai'] = 0
             gameresult['resultstring'] = "ai0won"
             try:
                 popen.kill()
             except:
-                print "Failed killing the process"
+                print("Failed killing the process")
                 traceback.print_exc()
             gameresult['replaypath'] = getreplaypath(infologcontents)
             return gameresult
         if infologcontents.find(ai0endstring) != -1 and\
                 infologcontents.find(ai1endstring) != - 1:
             # both died...
-            print "A draw..."
+            print("A draw...")
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "draw"
             try:
                 popen.kill()
             except:
-                print "Failed killing the process"
+                print("Failed killing the process")
                 traceback.print_exc()
             gameresult['replaypath'] = getreplaypath(infologcontents)
             return gameresult
@@ -579,19 +579,19 @@ def rungame(serverrequest, instanceid):
         if lastguaranteedinfologline.find("[") != -1:
             numstring = lastguaranteedinfologline.\
                     split("[")[1].split("]")[0].strip()
-            print "frame number string: " + numstring
+            print(("frame number string: " + numstring))
             try:
                 frames = int(numstring)
-                print "frames: " + str(frames)
+                print(("frames: " + str(frames)))
                 if frames / 30 > softtimeout * 60:
                     # timeout
-                    print "Game timed out"
+                    print("Game timed out")
                     gameresult['winningai'] = -1
                     gameresult['resultstring'] = "gametimeout"
                     try:
                         popen.kill()
                     except:
-                        print "Failed killing the process"
+                        print("Failed killing the process")
                         traceback.print_exc()
                     gameresult['replaypath'] = getreplaypath(infologcontents)
                     return gameresult
@@ -601,13 +601,13 @@ def rungame(serverrequest, instanceid):
         # check timeout (== draw)
         if (time.time() - starttimeseconds) > hardtimeout * 60.0:  # magic
             # timeout
-            print "Game timed out"
+            print("Game timed out")
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "gametimeout"
             try:
                 popen.kill()
             except:
-                print "Failed killing the process"
+                print("Failed killing the process")
                 traceback.print_exc()
             gameresult['replaypath'] = getreplaypath(infologcontents)
             return gameresult
@@ -616,7 +616,7 @@ def rungame(serverrequest, instanceid):
             # spring finished / died / crashed
             # presumably if we got here, it crashed,
             # otherwise infolog would have been written
-            print "Crashed"
+            print("Crashed")
             try:
                 popen.kill()  # just to be on the safe side?
             except:
@@ -632,9 +632,9 @@ def rungame(serverrequest, instanceid):
             try:
                 popen.kill()
             except:
-                print "Failed killing the process"
+                print("Failed killing the process")
                 traceback.print_exc()
-            print "Killing, it's using too much memory"
+            print("Killing, it's using too much memory")
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "crashed"
             gameresult['replaypath'] = getreplaypath(infologcontents)
@@ -649,7 +649,7 @@ def rungame(serverrequest, instanceid):
 # so we'll grab that file instead
 def getreplayfullpath(writabledatadirectory, relativereplaypathfrominfolog):
     if relativereplaypathfrominfolog == None:
-        print "No replay found", relativereplaypathfrominfolog
+        print(("No replay found", relativereplaypathfrominfolog))
         return None
 
     replayfullpath = writabledatadirectory + relativereplaypathfrominfolog
@@ -667,10 +667,10 @@ def getreplayfullpath(writabledatadirectory, relativereplaypathfrominfolog):
             os.listdir(demo_folderpath)[0])
 
     if not os.path.isfile(demo_newpath):
-        print "No replay found", demo_newpath
+        print(("No replay found", demo_newpath))
         return None
 
-    print 'Spring bug: replay is actually named:', demo_newpath
+    print(('Spring bug: replay is actually named:', demo_newpath))
     return demo_newpath
 
 
@@ -701,8 +701,8 @@ def uploadresulttoserver(host, serverrequest, gameresult, instanceid):
         replaycontents = replayfilehandle.read()
         replayfilehandle.close()
 
-        print "replay binary length: " + str(len(replaycontents))
-        replaybinarywrapper = xmlrpclib.Binary(replaycontents)
+        print(("replay binary length: " + str(len(replaycontents))))
+        replaybinarywrapper = xmlrpc.client.Binary(replaycontents)
         uploaddatadict['replay'] = replaybinarywrapper
 
     # should move this stuff to a function,
@@ -720,8 +720,8 @@ def uploadresulttoserver(host, serverrequest, gameresult, instanceid):
         replaycontents = replayfilehandle.read()
         replayfilehandle.close()
 
-        print "infolog binary length: " + str(len(replaycontents))
-        replaybinarywrapper = xmlrpclib.Binary(replaycontents)
+        print(("infolog binary length: " + str(len(replaycontents))))
+        replaybinarywrapper = xmlrpc.client.Binary(replaycontents)
         uploaddatadict['infolog'] = replaybinarywrapper
 
     requestuploadedok = False
@@ -731,11 +731,11 @@ def uploadresulttoserver(host, serverrequest, gameresult, instanceid):
                     config.botrunnername, config.sharedsecret,
                     serverrequest['matchrequest_id'],
                     gameresult['resultstring'], uploaddatadict)
-            print "upload result: " + str(result) + " " + errormessage
+            print(("upload result: " + str(result) + " " + errormessage))
             requestuploadedok = True
         except:
-            print "Something went wrong uploading to the server: " +\
-                    str(sys.exc_value) + ".\nRetrying ... "
+            print(("Something went wrong uploading to the server: " +\
+                    str(sys.exc_info()[1]) + ".\nRetrying ... "))
             time.sleep(5)
 
 
@@ -764,14 +764,14 @@ def getUnitSyncPath():
 def setupConfig():
     global config, options
 
-    print ""
-    print "Welcome to botrunner."
-    print ""
-    print "Let's get you set up..."
+    print(
+"""
+Welcome to botrunner.
+Let's get you set up...""")
     gotdata = False
 
     while not gotdata:
-        print ""
+        print("")
         if options.targetwebsite != None:
             weburl = options.targetwebsite
         else:
@@ -780,7 +780,7 @@ def setupConfig():
                     ['manageddreams.com/springgrid',
                         'manageddreams.com/springgridstaging',
                         'localhost/springgrid'], None, None)
-            print ""
+            print("")
         if weburl.lower().find("http://") == -1:
             weburl = "http://" + weburl
         if options.botrunnername != None:
@@ -789,7 +789,7 @@ def setupConfig():
             botrunnername = userinput.getValueFromUser(
                     "What name do you want to give to your botrunner? " +\
                             "This name will be shown on the website.")
-            print ""
+            print("")
         if options.botrunnersharedsecret != None:
             botrunnersharedsecret = options.botrunnersharedsecret
         else:
@@ -798,35 +798,35 @@ def setupConfig():
                 "This will be used to authenticate your botrunner " +\
                 "to the website. " +\
                 "Just pick something, and remember it.")
-            print ""
+            print("")
 
         if options.springsourcepath != None:
             springSourcePath = options.springsourcepath
         else:
             springSourcePath = userinput.getPath("path to Spring sourcecode",\
                     ['/home/user/springheadless'])
-            print "Spring source path: " + springSourcePath
-            print ""
+            print(("Spring source path: " + springSourcePath))
+            print("")
 
         if options.springpath != None:
             springPath = options.springpath
         else:
             springPath = getSpringPath()
             if springPath == '':
-                print "Spring executable not found. " +\
-                        "Please check that it is installed"
+                print(("Spring executable not found. " +\
+                        "Please check that it is installed"))
                 return False
-            print "Spring executable found: " + springPath
-            print ""
+            print(("Spring executable found: " + springPath))
+            print("")
         if options.unitsyncpath != None:
             unitsyncPath = options.unitsyncpath
         else:
             unitsyncPath = getUnitSyncPath()
             if unitsyncPath == '':
-                print "UnitSync not found. Please check that it is installed"
+                print("UnitSync not found. Please check that it is installed")
                 return False
-            print "UnitSync found: " + unitsyncPath
-            print ""
+            print(("UnitSync found: " + unitsyncPath))
+            print("")
         if os.getenv('JAVA_HOME') != None:
             JAVA_HOME = os.getenv('JAVA_HOME')
             usejava = True
@@ -836,7 +836,7 @@ def setupConfig():
                             "This will increase the number of AIs " +\
                             "this botrunner can run.")
             if usejava:
-                print ""
+                print("")
                 JAVA_HOME = userinput.getPath(
                         "Appropriate value for JAVA_HOME " +\
                                 "(eg /usr/lib/jvm/java-6-sun/jre or " +\
@@ -845,7 +845,7 @@ def setupConfig():
                             '/usr/lib/jvm/java-6-sun/jre'])
             else:
                 JAVA_HOME = None
-            print ""
+            print("")
         if options.downloadingok:
             downloadingok = True
         else:
@@ -854,19 +854,19 @@ def setupConfig():
             should probably only answer yes if you are running the botrunner in
             an isolated environment, such as a VirtualBox instance, a pc you
             don't use for anything else, or an EC2 instance.""")
-            print ""
-        print "You have input:"
-        print "   target web server: " + weburl
-        print "   botrunner name: " + botrunnername
-        print "   botrunner shared secret: " + botrunnersharedsecret
-        print "   spring source path: " + springSourcePath
-        print "   spring executable path: " + springPath
-        print "   UnitSync path: " + unitsyncPath
-        print "   Enable Java AIs: " + str(usejava)
+            print("")
+        print("You have input:")
+        print(("   target web server: " + weburl))
+        print(("   botrunner name: " + botrunnername))
+        print(("   botrunner shared secret: " + botrunnersharedsecret))
+        print(("   spring source path: " + springSourcePath))
+        print(("   spring executable path: " + springPath))
+        print(("   UnitSync path: " + unitsyncPath))
+        print(("   Enable Java AIs: " + str(usejava)))
         if usejava:
-            print "   JAVA_HOME: " + JAVA_HOME
-        print "   Downloading ok: " + str(downloadingok)
-        print ""
+            print(("   JAVA_HOME: " + JAVA_HOME))
+        print(("   Downloading ok: " + str(downloadingok)))
+        print("")
         if options.yes or userinput.getConfirmation("Is this correct?"):
             gotdata = True
 
@@ -901,14 +901,14 @@ def setupConfig():
 
 def registermaps(host, registeredmaps):
     global unitsynclock
-    print registeredmaps
+    print(registeredmaps)
 
     multicall = MultiCall(getxmlrpcproxy(host))
     unitsynclock.acquire()
-    for i in xrange(unitsync.GetMapCount()):
-        mapname = unitsync.GetMapName(i)
+    for i in range(unitsync.GetMapCount()):
+        mapname = str(unitsync.GetMapName(i))
         if registeredmaps.count(mapname) == 0:
-            print "registering map " + mapname + " ..."
+            print(("registering map " + mapname + " ..."))
             unitsync.GetMapArchiveCount(mapname)
             archivename = unitsync.GetMapArchiveName(0)
             #print unitsync.GetMapArchiveName(1)
@@ -924,25 +924,25 @@ def registermaps(host, registeredmaps):
         if result[0]:
             successcount = successcount + 1
     if total > 0:
-        print str(successcount) + " successes out of " + str(total)
+        print((str(successcount) + " successes out of " + str(total)))
 
 
 def registermods(host, registeredmods):
     global unitsynclock
-    print registeredmods
+    print(registeredmods)
 
     multicall = MultiCall(getxmlrpcproxy(host))
     unitsynclock.acquire()
-    for i in xrange(unitsync.GetPrimaryModCount()):
-        modname = unitsync.GetPrimaryModName(i)
+    for i in range(unitsync.GetPrimaryModCount()):
+        modname = str(unitsync.GetPrimaryModName(i))
         if registeredmods.count(modname) == 0:
-            print "registering mod " + modname + " ..."
+            print(("registering mod " + modname + " ..."))
             unitsync.GetPrimaryModArchiveCount(i)
             modarchive = unitsync.GetPrimaryModArchive(i)
             modarchivechecksum = unitsync.GetArchiveChecksum(modarchive)
             unitsync.RemoveAllArchives()
             unitsync.AddAllArchives(modarchive)
-            print unitsync.GetSideCount()
+            print((unitsync.GetSideCount()))
             sides = [unitsync.GetSideName(i) for i in
                     range(unitsync.GetSideCount())]
             if len(sides) == 0:
@@ -960,14 +960,14 @@ def registermods(host, registeredmods):
         if result[0]:
             successcount = successcount + 1
         else:
-            print result[1]
+            print((result[1]))
     if total > 0:
-        print str(successcount) + " successes out of " + str(total)
+        print((str(successcount) + " successes out of " + str(total)))
 
 
 def registerais(host, registeredais):
     global unitsynclock
-    print registeredais
+    print(registeredais)
 
     multicall = MultiCall(getxmlrpcproxy(host))
     registeredaiswehave = []
@@ -975,19 +975,19 @@ def registerais(host, registeredais):
     # have,
       # then unregister them
     unitsynclock.acquire()
-    for i in xrange(unitsync.GetSkirmishAICount()):
+    for i in range(unitsync.GetSkirmishAICount()):
         shortname = ''
         version = ''
-        for j in xrange(unitsync.GetSkirmishAIInfoCount(i)):
+        for j in range(unitsync.GetSkirmishAIInfoCount(i)):
             if unitsync.GetInfoKey(j) == "shortName":
-                shortname = unitsync.GetInfoValue(j)
+                shortname = name(unitsync.GetInfoValue(j))
             if unitsync.GetInfoKey(j) == "version":
-                version = unitsync.GetInfoValue(j)
+                version = name(unitsync.GetInfoValue(j))
 
         if shortname != '' and version != '':
             if registeredais.count([shortname, version]) == 0:
-                print "registering ai " + shortname + " version " + version +\
-                        " ..."
+                print(("registering ai " + shortname + " version " + version +\
+                        " ..."))
                 multicall.registersupportedai(config.botrunnername,
                         config.sharedsecret, shortname, version)
             else:
@@ -996,8 +996,8 @@ def registerais(host, registeredais):
 
     for shortname, version in registeredais:
         if registeredaiswehave.count([shortname, version]) == 0:
-            print "un-registering ai " + shortname + " version " + version +\
-                    " ..."
+            print(("un-registering ai " + shortname + " version " + version +\
+                    " ..."))
             multicall.registerunsupportedai(config.botrunnername,
                     config.sharedsecret, shortname, version)
 
@@ -1009,7 +1009,7 @@ def registerais(host, registeredais):
         if result[0]:
             successcount = successcount + 1
     if total > 0:
-        print str(successcount) + " successes out of " + str(total)
+        print((str(successcount) + " successes out of " + str(total)))
 
 
 # we do a single multicall to retrieve all registerdd mods, maps and ais
@@ -1079,12 +1079,12 @@ def go():
     parseopts()
 
     if options.version:
-        print ""
+        print("")
         if version != None:
-            print "AILadder, version: " + version.version
+            print(("AILadder, version: " + version.version))
         else:
-            print "AILadder, version: dev code, not a versioned release."
-        print ""
+            print("AILadder, version: dev code, not a versioned release.")
+        print("")
         return
 
     # check for config, question user if doesn't exist
@@ -1093,7 +1093,7 @@ def go():
             config = imp.load_source('config', options.configpath)
         else:
             import config
-        print "Configuration found, using"
+        print("Configuration found, using")
     except:
         ok = setupConfig()
         if not ok:
@@ -1103,28 +1103,28 @@ def go():
             import multiprocessing
             config.maxinstances = multiprocessing.cpu_count()
         except:
-            print "failed to import multiprocessing, set maxinstances manually"
+            print("failed to import multiprocessing, set maxinstances manually")
             config.maxinstances = 1
 
     initUnitSync()
 
     if sessionid == None:
         sessionid = stringhelper.getRandomAlphaNumericString(60)
-    print "Sessionid: " + sessionid
+    print( "Sessionid: " + sessionid)
 
     if not doping("Connection Test!"):
-        print """Failed to ping all configured websites.  Please check your
-        configuration and internet connection and try again."""
+        print("""Failed to ping all configured websites.  Please check your
+        configuration and internet connection and try again.""")
         return
 
     for host in config.websiteurls:
         if not options.noregistercapabilities:
             try:
-                print "registering capabilities with " + host + " ..."
+                print(("registering capabilities with " + host + " ..."))
                 registercapabilities(host)
             except:
-                print "Couldn't register capabilities to host " + host +\
-                        " " + str(sys.exc_info())
+                print(("Couldn't register capabilities to host " + host +\
+                        " " + str(sys.exc_info())))
                 traceback.print_exc()
 
     #try to set process niceness
@@ -1132,7 +1132,7 @@ def go():
         try:
             os.nice(19)
         except:
-            print "setting os niceness failed for posix platform"
+            print("setting os niceness failed for posix platform")
     while True:
         # go through each host getting a request
         # Process each request, then go back to start of loop,
@@ -1142,10 +1142,10 @@ def go():
         numinstanceslock.acquire()
         if numinstances < config.maxinstances:
             numinstanceslock.release()
-            print "Checking for new request..."
+            print("Checking for new request...")
             gotrequest = False
             for host in config.websiteurls:
-                print "checking " + host + " ..."
+                print(("checking " + host + " ..."))
                 serverrequest = requestgamefromwebserver(host)
                 if serverrequest != None:
                     # we have a request to process
@@ -1160,14 +1160,14 @@ def go():
                     numinstanceslock.release()
             # see if we can download a new ai
             if not gotrequest and config.allowdownloading:
-                print "checking for download request ... "
+                print("checking for download request ... ")
                 for host in config.websiteurls:
                     if trydownloadingsomething(host) != None:
                         gotrequest = True
                         break
 
             if not gotrequest:
-                print "Nothing to do.  Sleeping..."
+                print("Nothing to do.  Sleeping...")
                 doping("sleeping")
                 time.sleep(config.sleepthislongwhennothingtodoseconds)
         else:
