@@ -1,0 +1,111 @@
+[GAME]
+{
+	HostIP=localhost;
+	HostPort=0;
+	IsHost=1;
+	MyPlayerName=Botrunner;
+
+	ModHash=%MODHASH%;
+	MapHash=%MAPHASH%;
+	Mapname=%MAP%;
+	GameType=%MOD%;
+
+	startpostype=2;
+	[mapoptions]
+	{
+	}
+	[modoptions]
+	{
+		disablemapdamage=0;
+		fixedallies=0;
+		ghostedbuildings=1;
+		limitdgun=0;
+		mo_comgate=0;
+		mo_coop=0;
+		mo_enemywrecks=1;
+		mo_greenfields=0;
+		mo_noowner=0;
+		mo_noshare=1;
+		mo_nowrecks=0;
+		mo_preventdraw=0;
+		mo_progmines=0;
+		maxspeed=%SPEED%;
+		maxunits=500;
+		minspeed=%SPEED%;
+		startenergy=1000;
+		startmetal=1000;
+		deathmode=com;
+		gamemode=0;
+	}
+	NumRestrictions=0;
+	[RESTRICT]
+	{
+	}
+
+	NumPlayers=1;
+	NumUsers=3;
+
+	[PLAYER2]
+	{
+		Name=Botrunner;
+		CountryCode=;
+		Spectator=1;
+		Rank=0;
+		IsFromDemo=0;
+		Team=0;
+	}
+	[AI0]
+	{
+		Name=%AI0%%AI0VERSION%;
+		ShortName=%AI0%;
+		Version=%AI0VERSION%;
+		Team=0;
+		IsFromDemo=0;
+		Host=2;
+		[Options]
+		{
+		}
+	}
+	[AI1]
+	{
+		Name=%AI1%%AI1VERSION%;
+		ShortName=%AI1%;
+		Version=%AI1VERSION%;
+		Team=1;
+		IsFromDemo=0;
+		Host=2;
+		[Options]
+		{
+		}
+	}
+
+	[TEAM0]
+	{
+		TeamLeader=2;
+		AllyTeam=1;
+		RGBColor=0.976471 1 0;
+		Side=%TEAM0SIDE%;
+		Handicap=0;
+	}
+	[TEAM1]
+	{
+		TeamLeader=2;
+		AllyTeam=0;
+		RGBColor=0.509804 0.498039 1;
+		Side=%TEAM1SIDE%;
+		Handicap=0;
+	}
+
+	[ALLYTEAM1]
+	{
+		NumAllies=0;
+		startRectLeft=0.88; startRectTop=0.88;  startRectRight=1; startRectBottom=1; 
+
+	}
+	[ALLYTEAM0]
+	{
+		NumAllies=0;
+		startRectLeft=0; startRectTop=0;  startRectRight=0.12; startRectBottom=0.12; 
+
+	}
+}
