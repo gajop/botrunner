@@ -101,8 +101,9 @@ class GameRunner(threading.Thread):
         global writableDataDirectory
         datadir = writableDataDirectory + "tmpdir" + str(self.instanceid) + "/"
         scriptName = "script" + str(self.instanceid) + ".txt"
-        if os.path.exists(datadir):
-            shutil.rmtree(datadir)
+        # FIXME: Removing old files is temporary disabled as there are 0 byte replay uploads happening.
+        #if os.path.exists(datadir):
+            #shutil.rmtree(datadir)
         if os.path.exists(writableDataDirectory + scriptName):
             os.remove(writableDataDirectory + scriptName)
         matches.remove(self.serverRequest['matchrequest_id'])
@@ -387,17 +388,17 @@ def downloadai(host, downloadrequest):
         # now, do a 'make install' on spring source, and cross-fingers :-P
         logging.info("launching make install for " + ai_name + " ...")
         os.chdir(config.springSourcePath + '/build')
-        popen = subprocess.Popen(['cmake', '..'])
-        popen.wait()
+        process = subprocess.Popen(['cmake', '..'])
+        process.wait()
         # note: calling 'make' directly is not very portable
-        popen = subprocess.Popen(['make', ai_name])
-        popen.wait()
+        process = subprocess.Popen(['make', ai_name])
+        process.wait()
         logging.info("ai build finished finished")
         # run 'cmake -P AI/Skirmish/<ainame>/cmake_install.cmake'
         # to install the AI
-        popen = subprocess.Popen(['cmake', '-P', 'AI/Skirmish/' +\
+        process = subprocess.Popen(['cmake', '-P', 'AI/Skirmish/' +\
                 ai_name + '/cmake_install.cmake'])
-        popen.wait()
+        process.wait()
         logging.info("ai installed")
 
     # so it is installed....
@@ -412,6 +413,30 @@ def downloadai(host, downloadrequest):
 
     return True
 
+def stopProcess(process):
+    printError = process.poll() != None
+    try:
+        # first wait on the process to close itself
+        if process.poll() == None:
+            waitTime = 30
+            logging.info("Waiting " + str(waitTime) + " seconds for Spring to close itself")
+            while process.poll() == None and waitTime > 0:
+                time.sleep(1)
+                waitTime = waitTime - 1
+        # then send a .terminate() and wait some more
+        if process.poll() == None:
+            waitTime = 30
+            logging.info("Sending terminate and waiting " + str(waitTime) + " seconds for Spring to close")
+            process.terminate()
+            while process.poll() == None and waitTime > 0:
+                time.sleep(1)
+                waitTime = waitTime - 1
+        # then just kill it
+        process.kill()
+    except:
+        if printError:
+            logging.error("Failed stopping the process")
+            traceback.print_exc()
 
 def runGame(serverRequest, instanceid):
     global config, writableDataDirectory, unitsynclock
@@ -502,7 +527,7 @@ def runGame(serverRequest, instanceid):
         fnull = open(os.devnull, 'w')
     if os.name == 'nt':
         try:
-            popen = subprocess.Popen(
+            process = subprocess.Popen(
                     [config.springPath, writableDataDirectory + scriptName, "-d " + datadir],
                     env=existingenv, stdout=fnull,
                     stderr=fnull, creationflags=0x40)
@@ -510,11 +535,11 @@ def runGame(serverRequest, instanceid):
         except:
             logging.info("setting idle process priority failed for nt platform. " +\
                     "trying to start without priority settings")
-            popen = subprocess.Popen(
+            process = subprocess.Popen(
                     [config.springPath, writableDataDirectory + scriptName, "-d " + datadir],
                     env=existingenv, stdout=fnull, stderr=fnull)
     else:
-        popen = subprocess.Popen(
+        process = subprocess.Popen(
                 [config.springPath, writableDataDirectory + scriptName, "-d " + datadir],
                 env=existingenv, stdout=fnull, stderr=fnull)
     finished = False
@@ -545,44 +570,28 @@ def runGame(serverRequest, instanceid):
                 "%TEAMNUMBER%", "0")
         ai1endstring = gameEndString.replace(
                 "%TEAMNUMBER%", "1")
-        if (infologContents.find(ai0endstring) != -1) and (
-                infologContents.find(ai1endstring) == - 1):
-            # ai0 died
+        if infologContents.find(ai1endstring) != - 1:
+            # ai1 won
             logging.info("team 1 won!")
             gameresult['winningai'] = 1
             gameresult['resultstring'] = "ai1won"
-            try:
-                popen.kill()
-            except:
-                logging.error("Failed killing the process")
-                traceback.print_exc()
+            stopProcess(process)
             gameresult['replaypath'] = getReplayPath(infologContents)
             return gameresult
-        if infologContents.find(ai0endstring) == -1 and\
-                infologContents.find(ai1endstring) != - 1:
-            # ai1 died
+        elif infologContents.find(ai0endstring) != -1:
+            # ai0 won
             logging.info("team 0 won!")
             gameresult['winningai'] = 0
             gameresult['resultstring'] = "ai0won"
-            try:
-                popen.kill()
-            except:
-                logging.error("Failed killing the process")
-                traceback.print_exc()
+            stopProcess(process)
             gameresult['replaypath'] = getReplayPath(infologContents)
             return gameresult
-        if infologContents.find("Nobody wins!") != -1 and\
-			infologContents.find(ai0endstring) != -1 and\
-                infologContents.find(ai1endstring) != - 1:
+        elif infologContents.find("Nobody wins!") != -1:
             # both died...
             logging.info("A draw...")
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "draw"
-            try:
-                popen.kill()
-            except:
-                logging.error("Failed killing the process")
-                traceback.print_exc()
+            stopProcess(process)
             gameresult['replaypath'] = getReplayPath(infologContents)
             return gameresult
 
@@ -601,11 +610,7 @@ def runGame(serverRequest, instanceid):
                     logging.info("Game timed out")
                     gameresult['winningai'] = -1
                     gameresult['resultstring'] = "gametimeout"
-                    try:
-                        popen.kill()
-                    except:
-                        logging.error("Failed killing the process")
-                        traceback.print_exc()
+                    stopProcess(process)
                     gameresult['replaypath'] = getReplayPath(infologContents)
                     return gameresult
             except:
@@ -617,37 +622,26 @@ def runGame(serverRequest, instanceid):
             logging.info("Game timed out")
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "gametimeout"
-            try:
-                popen.kill()
-            except:
-                logging.error("Failed killing the process")
-                traceback.print_exc()
+            stopProcess(process)
             gameresult['replaypath'] = getReplayPath(infologContents)
             return gameresult
 
-        if popen.poll() != None:
+        if process.poll() != None:
             # spring finished / died / crashed
             # presumably if we got here, it crashed,
             # otherwise infolog would have been written
             logging.warning("Crashed")
-            try:
-                popen.kill()  # just to be on the safe side?
-            except:
-                pass
+            stopProcess(process)
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "crashed"
             gameresult['replaypath'] = getReplayPath(infologContents)
             return gameresult
 
-        proc = psutil.Process(popen.pid)
+        proc = psutil.Process(process.pid)
         rss = proc.memory_info()[0]
         if rss / (1024 * 1024) > config.maxmemory:
-            try:
-                popen.kill()
-            except:
-                logging.error("Failed killing the process")
-                traceback.print_exc()
             logging.warning("Killing, it's using too much memory")
+            stopProcess(process)
             gameresult['winningai'] = -1
             gameresult['resultstring'] = "crashed"
             gameresult['replaypath'] = getReplayPath(infologContents)
@@ -712,7 +706,9 @@ def uploadResults(host, serverRequest, gameresult, instanceid):
         tarhandle.add(os.path.basename(replaypath))
         tarhandle.close()
 
-        replayfilehandle = open(datadir + replaytarname, 'rb')
+        # replayfilehandle = open(datadir + replaytarname, 'rb')
+        # NOTICE: Using the RAW file for upload
+        replayfilehandle = open(replaypath, 'rb')
         replaycontents = replayfilehandle.read()
         replayfilehandle.close()
 
@@ -720,7 +716,7 @@ def uploadResults(host, serverRequest, gameresult, instanceid):
         replaybinarywrapper = xmlrpc.client.Binary(replaycontents)
         uploaddatadict['replay'] = replaybinarywrapper
 
-    # should move this stuff to a function,
+    # TODO: should move this stuff to a function,
     # but just hacking it in for now to get it working
     if os.path.exists(datadir + infologname):
         # first tar.bz2 it
@@ -731,7 +727,9 @@ def uploadResults(host, serverRequest, gameresult, instanceid):
         tarhandle.add(os.path.basename(infologname))
         tarhandle.close()
 
-        replayfilehandle = open(datadir + infologtarname, 'rb')
+        # replayfilehandle = open(datadir + infologtarname, 'rb')
+        # NOTICE: Using the RAW file for upload
+        replayfilehandle = open(datadir + infologname, 'rb')
         replaycontents = replayfilehandle.read()
         replayfilehandle.close()
 
@@ -950,13 +948,13 @@ def registermods(host, registeredmods):
     unitsynclock.acquire()
     for i in range(unitsync.GetPrimaryModCount()):
         modname = unitsync.GetPrimaryModName(i).decode("utf-8")
+        unitsync.GetPrimaryModArchiveCount(i)
+        modarchive = unitsync.GetPrimaryModArchive(i)
+        modarchivechecksum = unitsync.GetArchiveChecksum(modarchive)
+        unitsync.RemoveAllArchives()
+        unitsync.AddAllArchives(modarchive)
         if registeredmods.count(modname) == 0:
             logging.info("registering mod " + modname + " ...")
-            unitsync.GetPrimaryModArchiveCount(i)
-            modarchive = unitsync.GetPrimaryModArchive(i)
-            modarchivechecksum = unitsync.GetArchiveChecksum(modarchive)
-            unitsync.RemoveAllArchives()
-            unitsync.AddAllArchives(modarchive)
             logging.info("#Sides: " + str(unitsync.GetSideCount()))
             sides = [unitsync.GetSideName(i).decode("utf-8") for i in
                     range(unitsync.GetSideCount())]

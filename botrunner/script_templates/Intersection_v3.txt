@@ -82,7 +82,7 @@
 	[TEAM0]
 	{
 		TeamLeader=2;
-		AllyTeam=1;
+        AllyTeam=0;
 		RGBColor=0.976471 1 0;
 		Side=%TEAM0SIDE%;
 		Handicap=0;
@@ -90,7 +90,7 @@
 	[TEAM1]
 	{
 		TeamLeader=2;
-		AllyTeam=0;
+		AllyTeam=1;
 		RGBColor=0.509804 0.498039 1;
 		Side=%TEAM1SIDE%;
 		Handicap=0;
