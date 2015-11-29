@@ -638,7 +638,11 @@ def runGame(serverRequest, instanceid):
             return gameresult
 
         proc = psutil.Process(process.pid)
-        rss = proc.memory_info()[0]
+        # Backward compatibility
+        if proc.get_memory_info:
+            rss = proc.get_memory_info()[0]
+        else:
+            rss = proc.memory_info()[0]
         if rss / (1024 * 1024) > config.maxmemory:
             logging.warning("Killing, it's using too much memory")
             stopProcess(process)
